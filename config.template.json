@@ -1,0 +1,27 @@
+{
+  "projectName": "無障礙友善地圖",
+  "description": "收集無障礙友善的食衣住行店家資訊",
+  "googleMapsApiKey": "",
+  "googleScriptUrl": "https://script.google.com/macros/s/AKfycbxneWj5d-De1OIr2JUIBpbxz4mQUZCa5m0wpGmWKEFNqyRFd6UMd53hXIyFS0f4v3o/exec",
+  "mapCenter": { "lat": 25.033, "lng": 121.565 },
+  "mapZoom": 13,
+  "categories": [
+    { "value": "food", "label": "食", "color": "#e74c3c", "emoji": "🍽️" },
+    { "value": "clothing", "label": "衣", "color": "#9b59b6", "emoji": "👕" },
+    { "value": "housing", "label": "住", "color": "#3498db", "emoji": "🏠" },
+    { "value": "transport", "label": "行", "color": "#27ae60", "emoji": "🚌" },
+    { "value": "repair", "label": "維修", "color": "#e67e22", "emoji": "🔧" },
+    { "value": "rental", "label": "租賃", "color": "#16a085", "emoji": "🔑" }
+  ],
+  "accessibilityOptions": [
+    "輪椅坡道",
+    "電梯",
+    "無障礙廁所",
+    "導盲磚",
+    "無障礙停車位",
+    "服務鈴",
+    "寬走道",
+    "離捷運很近",
+    "CP值很高"
+  ]
+}
