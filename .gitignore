@@ -3,3 +3,6 @@
 
 # 含 API Key，由 build 腳本從環境變數產生
 config.json
+
+# 建置輸出
+dist/

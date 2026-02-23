@@ -1,0 +1,9 @@
+# Cloudflare Workers 靜態資源部署
+# 整合後的 Workers & Pages 平台
+name = "map-collector"
+compatibility_date = "2025-02-13"
+
+# 純靜態網站，無 Worker 程式碼
+# 建置後部署 dist/ 目錄
+[assets]
+directory = "./dist"

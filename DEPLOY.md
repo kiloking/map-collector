@@ -2,50 +2,56 @@
 
 ## 環境變數
 
-使用環境變數保護敏感資訊，避免將 API Key 提交到 Git。
-
 | 變數名稱 | 說明 | 必填 |
 |----------|------|------|
 | `GOOGLE_MAPS_API_KEY` | Google Maps API 金鑰 | ✓ |
-| `GOOGLE_SCRIPT_URL` | Google Apps Script 網址（選填，預設用 template 中的值） | |
+| `GOOGLE_SCRIPT_URL` | Google Apps Script 網址（選填） | |
 
 ---
 
 ## 本地開發
 
-產生 `config.json`：
-
 ```bash
-GOOGLE_MAPS_API_KEY=你的API金鑰 node scripts/build-config.js
-```
-
-或一次設定多個：
-
-```bash
-GOOGLE_MAPS_API_KEY=xxx GOOGLE_SCRIPT_URL=yyy node scripts/build-config.js
+GOOGLE_MAPS_API_KEY=你的API金鑰 npm run build
 ```
 
 ---
 
-## Cloudflare Pages 部署
+## Cloudflare Workers & Pages 部署
 
-1. **Settings** → **Environment variables**
-2. 新增變數：
-   - **Variable name**: `GOOGLE_MAPS_API_KEY`
-   - **Value**: 你的 Google Maps API 金鑰
-   - **Environment**: Production（及 Preview 若需要）
+整合後的平台使用 `wrangler` 部署靜態資源。
 
-3. **Build settings**：
-   - **Build command**: `node scripts/build-config.js`
-   - **Build output directory**: `/`
-   - **Root directory**: 留空或 `/`
+### 方法一：Git 連線（推薦）
 
-4. 儲存後重新部署
+1. **Workers & Pages** → **Create** → **Connect to Git** → 選擇 `map-collector`
+2. **Build settings**：
+   - **Build command**: `npm run build && npx wrangler deploy`
+   - 或分開：**Build command** `npm run build`，**Build output** 不適用（wrangler 會處理）
+3. **Environment variables**：新增 `GOOGLE_MAPS_API_KEY`
+
+> 若 Cloudflare 的 Git 整合要求「Build output directory」，可設為 `dist`，並將 Build command 改為 `npm run build`。部分整合可能需用 **Direct Upload** 或 **Wrangler**。
+
+### 方法二：本機指令部署
+
+```bash
+# 1. 安裝依賴（首次）
+npm install
+
+# 2. 登入 Cloudflare
+npx wrangler login
+
+# 3. 建置並部署
+GOOGLE_MAPS_API_KEY=你的金鑰 npm run deploy
+```
+
+### 方法三：GitHub Actions 自動部署
+
+在 repo 設定 `GOOGLE_MAPS_API_KEY` 為 GitHub Secret，建立 `.github/workflows/deploy.yml` 於 push 時自動執行 `npm run deploy`。
 
 ---
 
-## 注意
+## 檔案說明
 
-- `config.template.json` 可提交到 Git（不含敏感資訊）
-- `config.json` 已加入 `.gitignore`，不會被提交
-- 部署前請在 Google Cloud Console 為 API Key 設定 HTTP referrer 限制
+- `wrangler.toml`：Cloudflare 設定，指定 `dist/` 為靜態資源目錄
+- `config.template.json`：可提交，不含 API Key
+- `config.json`、`dist/`：已加入 `.gitignore`
