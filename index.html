@@ -1,0 +1,1585 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>載入中...</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC",
+          sans-serif;
+        color: #333;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ===== Header ===== */
+      .header {
+        background: #1a73e8;
+        color: #fff;
+        padding: 12px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+        z-index: 10;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+      }
+      .header h1 {
+        font-size: 18px;
+        font-weight: 600;
+      }
+      .header .stats {
+        font-size: 13px;
+        opacity: 0.9;
+      }
+
+      /* ===== Main Layout ===== */
+      .main {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+      }
+
+      /* ===== Map ===== */
+      .map-area {
+        flex: 1;
+        position: relative;
+      }
+      #map {
+        width: 100%;
+        height: 100%;
+      }
+
+      .map-hint {
+        position: absolute;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.75);
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        pointer-events: none;
+        transition: opacity 0.3s;
+        z-index: 5;
+      }
+      .map-hint.hidden {
+        opacity: 0;
+      }
+
+      /* ===== Panel ===== */
+      .panel {
+        width: 400px;
+        background: #fff;
+        border-left: 1px solid #e0e0e0;
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        overflow: hidden;
+        transition: transform 0.3s;
+      }
+      .panel.collapsed {
+        transform: translateX(100%);
+        width: 0;
+        border: none;
+      }
+
+      .panel-header {
+        padding: 16px 20px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e0e0e0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+      }
+      .panel-header h2 {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .panel-close {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        color: #666;
+        padding: 4px 8px;
+        border-radius: 4px;
+      }
+      .panel-close:hover {
+        background: #eee;
+      }
+
+      .panel-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+      }
+
+      /* ===== Search Box ===== */
+      .search-group {
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #eee;
+      }
+      .search-group .field-label {
+        margin-bottom: 6px;
+      }
+      .search-wrapper {
+        position: relative;
+      }
+      .search-icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 16px;
+        color: #999;
+        pointer-events: none;
+      }
+      .search-input {
+        width: 100%;
+        padding: 10px 12px 10px 34px;
+        font-size: 14px;
+        border: 1.5px solid #1a73e8;
+        border-radius: 8px;
+        background: #f0f6ff;
+        outline: none;
+        font-family: inherit;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      .search-input:focus {
+        border-color: #1a73e8;
+        box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
+        background: #fff;
+      }
+      .search-input::placeholder {
+        color: #aaa;
+      }
+      .search-hint {
+        font-size: 11px;
+        color: #999;
+        margin-top: 4px;
+      }
+      .search-or {
+        text-align: center;
+        font-size: 12px;
+        color: #bbb;
+        margin-top: 10px;
+        position: relative;
+      }
+      .search-or::before,
+      .search-or::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 35%;
+        height: 1px;
+        background: #ddd;
+      }
+      .search-or::before {
+        left: 0;
+      }
+      .search-or::after {
+        right: 0;
+      }
+
+      /* ===== Form Styles ===== */
+      .field-group {
+        margin-bottom: 16px;
+      }
+
+      .field-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #444;
+        margin-bottom: 5px;
+      }
+      .field-label .req {
+        color: #e74c3c;
+        margin-left: 2px;
+      }
+
+      .field-input,
+      .field-textarea,
+      .field-select {
+        width: 100%;
+        padding: 9px 12px;
+        font-size: 14px;
+        border: 1.5px solid #ddd;
+        border-radius: 6px;
+        background: #fafafa;
+        outline: none;
+        font-family: inherit;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      .field-input:focus,
+      .field-textarea:focus,
+      .field-select:focus {
+        border-color: #1a73e8;
+        box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+        background: #fff;
+      }
+      .field-input.error,
+      .field-textarea.error,
+      .field-select.error {
+        border-color: #e74c3c;
+      }
+      .field-textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+
+      .coord-display {
+        display: flex;
+        gap: 8px;
+      }
+      .coord-display .field-input {
+        background: #f0f0f0;
+        color: #666;
+      }
+
+      /* Checkboxes */
+      .checkbox-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+      .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        cursor: pointer;
+        padding: 4px 0;
+      }
+      .checkbox-item input {
+        cursor: pointer;
+        width: 16px;
+        height: 16px;
+      }
+
+      /* Star Rating */
+      .star-rating {
+        display: flex;
+        gap: 4px;
+      }
+      .star-rating .star {
+        font-size: 28px;
+        cursor: pointer;
+        color: #ddd;
+        transition: color 0.15s;
+        user-select: none;
+      }
+      .star-rating .star.active {
+        color: #f5a623;
+      }
+      .star-rating .star:hover {
+        color: #f5a623;
+      }
+
+      /* Category Buttons */
+      .category-btns {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .cat-btn {
+        padding: 6px 16px;
+        border: 2px solid #ddd;
+        border-radius: 20px;
+        background: #fff;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: 500;
+      }
+      .cat-btn:hover {
+        border-color: #aaa;
+      }
+      .cat-btn.selected {
+        color: #fff;
+        border-color: transparent;
+      }
+
+      /* Submit */
+      .submit-btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 15px;
+        font-weight: 600;
+        color: #fff;
+        background: #1a73e8;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+        margin-top: 4px;
+      }
+      .submit-btn:hover {
+        background: #1557b0;
+      }
+      .submit-btn:disabled {
+        background: #93b8e8;
+        cursor: not-allowed;
+      }
+      .submit-btn .spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2.5px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        vertical-align: middle;
+        margin-right: 6px;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Toggle button for mobile */
+      .panel-toggle {
+        display: none;
+        position: absolute;
+        top: 80px;
+        right: 16px;
+        z-index: 5;
+        background: #1a73e8;
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+      }
+
+      /* Info window */
+      .info-content {
+        font-size: 13px;
+        line-height: 1.5;
+        max-width: 280px;
+      }
+      .info-content h3 {
+        font-size: 15px;
+        margin-bottom: 4px;
+      }
+      .info-content .info-cat {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .info-content .info-stars {
+        color: #f5a623;
+        margin-bottom: 4px;
+      }
+      .info-content .info-facilities {
+        color: #666;
+        font-size: 12px;
+        margin-bottom: 4px;
+      }
+      .info-content .info-note {
+        color: #444;
+        font-size: 12px;
+        border-top: 1px solid #eee;
+        padding-top: 6px;
+        margin-top: 6px;
+      }
+      .info-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #eee;
+      }
+      .info-btn {
+        flex: 1;
+        padding: 6px 0;
+        border: none;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          opacity 0.2s;
+      }
+      .info-btn-edit {
+        background: #e8f0fe;
+        color: #1a73e8;
+      }
+      .info-btn-edit:hover {
+        background: #d2e3fc;
+      }
+      .info-btn-delete {
+        background: #fce8e6;
+        color: #d93025;
+      }
+      .info-btn-delete:hover {
+        background: #f8d7da;
+      }
+
+      /* Cancel button */
+      .cancel-btn {
+        width: 100%;
+        padding: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #666;
+        background: #f0f0f0;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+        margin-top: 8px;
+      }
+      .cancel-btn:hover {
+        background: #e0e0e0;
+      }
+
+      /* Edit mode indicator */
+      .panel-header.edit-mode {
+        background: #e8f0fe;
+      }
+      .panel-header.edit-mode h2 {
+        color: #1a73e8;
+      }
+
+      /* Map legend */
+      .map-legend {
+        position: absolute;
+        bottom: 24px;
+        left: 16px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 8px;
+        padding: 10px 14px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        z-index: 5;
+        font-size: 12px;
+      }
+      .map-legend .legend-title {
+        font-weight: 600;
+        margin-bottom: 6px;
+        font-size: 11px;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .legend-items {
+        display: flex;
+        gap: 12px;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        top: 70px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-20px);
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #fff;
+        opacity: 0;
+        transition:
+          opacity 0.3s,
+          transform 0.3s;
+        z-index: 1000;
+      }
+      .toast.success {
+        background: #27ae60;
+      }
+      .toast.error {
+        background: #e74c3c;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* Loading overlay */
+      .loading-overlay {
+        position: fixed;
+        inset: 0;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .loading-overlay .spinner-lg {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #ddd;
+        border-top-color: #1a73e8;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      .loading-overlay.hidden {
+        display: none;
+      }
+
+      /* Place Autocomplete (New) - 新版 Places API 元件 */
+      .search-wrapper gmp-place-autocomplete,
+      .search-wrapper [id="placeAutocompleteInput"] {
+        width: 100%;
+        display: block;
+      }
+
+      /* Autocomplete dropdown style override */
+      .pac-container {
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        border: none;
+        margin-top: 4px;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC",
+          sans-serif;
+      }
+      .pac-item {
+        padding: 8px 12px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .pac-item:hover {
+        background: #f0f6ff;
+      }
+
+      /* ===== Responsive ===== */
+      @media (max-width: 768px) {
+        .main {
+          flex-direction: column;
+        }
+        .map-area {
+          height: 55vh;
+        }
+        .panel {
+          width: 100%;
+          border-left: none;
+          border-top: 1px solid #e0e0e0;
+          max-height: 45vh;
+        }
+        .panel-toggle {
+          display: block;
+        }
+        .map-legend {
+          bottom: 64px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loading -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="spinner-lg"></div>
+      <span>載入地圖中...</span>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+      <h1 id="headerTitle">無障礙友善地圖</h1>
+      <div class="stats" id="headerStats">已收集 0 筆資料</div>
+    </div>
+
+    <!-- Main -->
+    <div class="main">
+      <div class="map-area">
+        <div id="map"></div>
+        <div class="map-hint" id="mapHint">搜尋店家或點擊地圖選擇位置</div>
+        <button class="panel-toggle" id="panelToggle" title="開啟表單">
+          +
+        </button>
+        <!-- Legend: built dynamically -->
+        <div class="map-legend" id="mapLegend"></div>
+      </div>
+
+      <div class="panel" id="panel">
+        <div class="panel-header">
+          <h2 id="panelTitle">新增店家</h2>
+          <button class="panel-close" id="panelClose" title="關閉">
+            &times;
+          </button>
+        </div>
+        <div class="panel-body">
+          <form id="dataForm" novalidate>
+            <!-- Search -->
+            <div class="search-group">
+              <label class="field-label">搜尋店家</label>
+              <div class="search-wrapper">
+                <span class="search-icon">&#128269;</span>
+                <input
+                  type="text"
+                  id="searchInput"
+                  class="search-input"
+                  placeholder="輸入店名或地址搜尋..."
+                />
+              </div>
+              <div class="search-hint">選擇結果後自動帶入店名、地址和座標</div>
+              <div class="search-or">或直接點擊地圖</div>
+            </div>
+
+            <!-- Coordinates -->
+            <div class="field-group">
+              <label class="field-label"
+                >選擇位置 <span class="req">*</span></label
+              >
+              <div class="coord-display">
+                <input
+                  type="text"
+                  id="fieldLat"
+                  class="field-input"
+                  placeholder="緯度"
+                  readonly
+                />
+                <input
+                  type="text"
+                  id="fieldLng"
+                  class="field-input"
+                  placeholder="經度"
+                  readonly
+                />
+              </div>
+            </div>
+
+            <!-- Shop Name -->
+            <div class="field-group">
+              <label class="field-label" for="fieldName"
+                >店名 <span class="req">*</span></label
+              >
+              <input
+                type="text"
+                id="fieldName"
+                class="field-input"
+                placeholder="請輸入店家名稱"
+                required
+              />
+            </div>
+
+            <!-- Address -->
+            <div class="field-group">
+              <label class="field-label" for="fieldAddress">地址</label>
+              <input
+                type="text"
+                id="fieldAddress"
+                class="field-input"
+                placeholder="自動帶入或手動輸入"
+              />
+            </div>
+
+            <!-- Category -->
+            <div class="field-group">
+              <label class="field-label">類別 <span class="req">*</span></label>
+              <div class="category-btns" id="categoryBtns"></div>
+              <input type="hidden" id="fieldCategory" required />
+            </div>
+
+            <!-- Accessibility -->
+            <div class="field-group">
+              <label class="field-label">無障礙服務標籤</label>
+              <div class="checkbox-grid" id="accessibilityGrid"></div>
+            </div>
+
+            <!-- Rating -->
+            <div class="field-group">
+              <label class="field-label"
+                >體驗評分 <span class="req">*</span></label
+              >
+              <div class="star-rating" id="starRating">
+                <span class="star" data-value="1">&#9733;</span>
+                <span class="star" data-value="2">&#9733;</span>
+                <span class="star" data-value="3">&#9733;</span>
+                <span class="star" data-value="4">&#9733;</span>
+                <span class="star" data-value="5">&#9733;</span>
+              </div>
+              <input type="hidden" id="fieldRating" required />
+            </div>
+
+            <!-- Experience -->
+            <div class="field-group">
+              <label class="field-label" for="fieldExperience"
+                >實際體驗心得</label
+              >
+              <textarea
+                id="fieldExperience"
+                class="field-textarea"
+                placeholder="請描述你的實際體驗過程..."
+              ></textarea>
+            </div>
+
+            <!-- Reporter -->
+            <div class="field-group">
+              <label class="field-label" for="fieldReporter">回報者名稱</label>
+              <input
+                type="text"
+                id="fieldReporter"
+                class="field-input"
+                placeholder="你的名字（選填）"
+              />
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+              送出資料
+            </button>
+            <button
+              type="button"
+              class="cancel-btn"
+              id="cancelBtn"
+              style="display: none"
+              onclick="window._cancelEdit()"
+            >
+              取消編輯
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        let config = null;
+        let map = null;
+        let markers = [];
+        let tempMarker = null;
+        let infoWindow = null;
+        let selectedRating = 0;
+        let allData = [];
+        let placeAutocompleteEl = null; // Places API (New) PlaceAutocompleteElement
+        let editingItem = null; // 目前正在編輯的項目（null = 新增模式）
+
+        // ====== Utility ======
+
+        function showToast(msg, type) {
+          const t = document.getElementById("toast");
+          t.textContent = msg;
+          t.className = "toast " + type;
+          void t.offsetWidth;
+          t.classList.add("show");
+          setTimeout(() => t.classList.remove("show"), 3500);
+        }
+
+        function escapeHtml(str) {
+          const d = document.createElement("div");
+          d.textContent = str || "";
+          return d.innerHTML;
+        }
+
+        // ====== Custom Marker Icon (SVG Pin) ======
+
+        function createPinIcon(color, emoji) {
+          // SVG pin marker with emoji inside
+          var svg =
+            '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="52" viewBox="0 0 40 52">' +
+            "<defs>" +
+            '<filter id="shadow" x="-20%" y="-10%" width="140%" height="140%">' +
+            '<feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="rgba(0,0,0,0.3)"/>' +
+            "</filter>" +
+            "</defs>" +
+            '<path d="M20 50 C20 50 3 30 3 18 C3 8.6 10.6 1 20 1 C29.4 1 37 8.6 37 18 C37 30 20 50 20 50Z" ' +
+            'fill="' +
+            color +
+            '" stroke="#fff" stroke-width="2" filter="url(#shadow)"/>' +
+            '<circle cx="20" cy="18" r="11" fill="#fff" opacity="0.9"/>' +
+            '<text x="20" y="23" text-anchor="middle" font-size="14">' +
+            emoji +
+            "</text>" +
+            "</svg>";
+
+          return {
+            url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg),
+            scaledSize: new google.maps.Size(40, 52),
+            anchor: new google.maps.Point(20, 52),
+          };
+        }
+
+        function createTempPinIcon() {
+          var svg =
+            '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="52" viewBox="0 0 40 52">' +
+            "<defs>" +
+            '<filter id="shadow" x="-20%" y="-10%" width="140%" height="140%">' +
+            '<feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="rgba(0,0,0,0.3)"/>' +
+            "</filter>" +
+            "</defs>" +
+            '<path d="M20 50 C20 50 3 30 3 18 C3 8.6 10.6 1 20 1 C29.4 1 37 8.6 37 18 C37 30 20 50 20 50Z" ' +
+            'fill="#1a73e8" stroke="#fff" stroke-width="2" filter="url(#shadow)"/>' +
+            '<circle cx="20" cy="18" r="11" fill="#fff" opacity="0.9"/>' +
+            '<text x="20" y="23" text-anchor="middle" font-size="14">📍</text>' +
+            "</svg>";
+
+          return {
+            url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg),
+            scaledSize: new google.maps.Size(40, 52),
+            anchor: new google.maps.Point(20, 52),
+          };
+        }
+
+        // ====== Load Config ======
+
+        async function loadConfig() {
+          try {
+            const res = await fetch("config.json");
+            if (!res.ok) throw new Error("無法載入設定檔");
+            config = await res.json();
+            document.title = config.projectName || "地圖資料收集";
+            document.getElementById("headerTitle").textContent =
+              config.projectName;
+            initUI();
+            loadGoogleMaps();
+          } catch (err) {
+            document.getElementById("loadingOverlay").innerHTML =
+              '<strong style="color:#e74c3c;">載入設定檔失敗</strong><p style="color:#888;">請確認 config.json 是否存在</p>';
+          }
+        }
+
+        // ====== Init UI ======
+
+        function initUI() {
+          // Category buttons (with emoji)
+          const catContainer = document.getElementById("categoryBtns");
+          config.categories.forEach(function (cat) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "cat-btn";
+            btn.textContent = (cat.emoji || "") + " " + cat.label;
+            btn.dataset.value = cat.value;
+            btn.dataset.color = cat.color;
+            btn.addEventListener("click", function () {
+              catContainer.querySelectorAll(".cat-btn").forEach(function (b) {
+                b.classList.remove("selected");
+                b.style.background = "";
+              });
+              btn.classList.add("selected");
+              btn.style.background = cat.color;
+              document.getElementById("fieldCategory").value = cat.value;
+            });
+            catContainer.appendChild(btn);
+          });
+
+          // Accessibility checkboxes
+          const accGrid = document.getElementById("accessibilityGrid");
+          config.accessibilityOptions.forEach(function (opt) {
+            const label = document.createElement("label");
+            label.className = "checkbox-item";
+            label.innerHTML =
+              '<input type="checkbox" value="' +
+              escapeHtml(opt) +
+              '"> ' +
+              escapeHtml(opt);
+            accGrid.appendChild(label);
+          });
+
+          // Star rating
+          const stars = document.querySelectorAll("#starRating .star");
+          stars.forEach(function (star) {
+            star.addEventListener("click", function () {
+              selectedRating = parseInt(star.dataset.value);
+              document.getElementById("fieldRating").value = selectedRating;
+              updateStars();
+            });
+          });
+
+          // Map legend
+          var legendHtml =
+            '<div class="legend-title">圖例</div><div class="legend-items">';
+          config.categories.forEach(function (cat) {
+            legendHtml += '<div class="legend-item">';
+            legendHtml +=
+              '<span class="legend-dot" style="background:' +
+              cat.color +
+              '"></span>';
+            legendHtml +=
+              "<span>" + (cat.emoji || "") + " " + cat.label + "</span>";
+            legendHtml += "</div>";
+          });
+          legendHtml += "</div>";
+          document.getElementById("mapLegend").innerHTML = legendHtml;
+
+          // Panel toggle (mobile)
+          document
+            .getElementById("panelToggle")
+            .addEventListener("click", function () {
+              document.getElementById("panel").classList.remove("collapsed");
+            });
+          document
+            .getElementById("panelClose")
+            .addEventListener("click", function () {
+              document.getElementById("panel").classList.add("collapsed");
+            });
+
+          // Form submit
+          document
+            .getElementById("dataForm")
+            .addEventListener("submit", handleSubmit);
+        }
+
+        function updateStars() {
+          document.querySelectorAll("#starRating .star").forEach(function (s) {
+            s.classList.toggle(
+              "active",
+              parseInt(s.dataset.value) <= selectedRating,
+            );
+          });
+        }
+
+        // ====== Google Maps ======
+
+        function loadGoogleMaps() {
+          const script = document.createElement("script");
+          // 使用 loading=async 以支援 Places API (New)，不再使用 legacy places 函式庫
+          script.src =
+            "https://maps.googleapis.com/maps/api/js?key=" +
+            config.googleMapsApiKey +
+            "&loading=async&callback=initMap";
+          script.async = true;
+          script.defer = true;
+          document.head.appendChild(script);
+        }
+
+        window.initMap = async function () {
+          const center = config.mapCenter || { lat: 25.033, lng: 121.565 };
+
+          map = new google.maps.Map(document.getElementById("map"), {
+            center: center,
+            zoom: config.mapZoom || 13,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: true,
+            styles: [
+              { featureType: "administrative", elementType: "labels.text.fill", stylers: [{ color: "#5a5a5a" }] },
+              { featureType: "landscape", elementType: "geometry.fill", stylers: [{ color: "#f7f5f3" }] },
+              { featureType: "landscape", elementType: "labels", stylers: [{ visibility: "off" }] },
+              { featureType: "poi", elementType: "all", stylers: [{ visibility: "simplified" }] },
+              { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#4a4a4a" }] },
+              { featureType: "road", elementType: "all", stylers: [{ saturation: -100 }, { lightness: 50 }, { color: "#e8e6e2" }] },
+              { featureType: "road", elementType: "labels", stylers: [{ visibility: "off" }] },
+              { featureType: "road", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+              { featureType: "road.highway", elementType: "all", stylers: [{ visibility: "simplified" }, { weight: 0.81 }] },
+              { featureType: "road.highway", elementType: "geometry.fill", stylers: [{ color: "#f0eeea" }] },
+              { featureType: "road.arterial", elementType: "all", stylers: [{ weight: 0.75 }, { visibility: "simplified" }] },
+              { featureType: "road.arterial", elementType: "geometry.fill", stylers: [{ color: "#f0eeea" }] },
+              { featureType: "road.arterial", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+              { featureType: "transit", elementType: "all", stylers: [{ visibility: "off" }] },
+              { featureType: "water", elementType: "all", stylers: [{ color: "#a8d4e8" }, { visibility: "on" }] }
+            ],
+          });
+
+          infoWindow = new google.maps.InfoWindow();
+
+          // Click on map to place temp marker
+          map.addListener("click", function (e) {
+            placeTemporaryMarker(e.latLng);
+          });
+
+          // Init Places Autocomplete (New API)
+          await initSearchBox();
+
+          document.getElementById("loadingOverlay").classList.add("hidden");
+
+          // Load existing data
+          loadExistingData();
+        };
+
+        // ====== Places Search (Places API New) ======
+
+        async function initSearchBox() {
+          await google.maps.importLibrary("places");
+
+          var searchWrapper = document.querySelector(".search-wrapper");
+          var oldInput = document.getElementById("searchInput");
+          var searchIcon = searchWrapper.querySelector(".search-icon");
+          if (oldInput) oldInput.remove();
+          if (searchIcon) searchIcon.remove(); // PlaceAutocompleteElement 自帶搜尋圖示
+
+          placeAutocompleteEl = new google.maps.places.PlaceAutocompleteElement(
+            {
+              placeholder: "輸入店名或地址搜尋...",
+              includedRegionCodes: ["tw"],
+              // 不限制 establishment，可同時搜尋店家與地址
+            },
+          );
+          placeAutocompleteEl.id = "placeAutocompleteInput";
+          searchWrapper.appendChild(placeAutocompleteEl);
+
+          var onPlaceSelect = async function (ev) {
+            var placePrediction =
+              (ev.detail && ev.detail.placePrediction) || ev.placePrediction;
+            if (!placePrediction) return;
+            var place = placePrediction.toPlace();
+            await place.fetchFields({
+              fields: [
+                "displayName",
+                "formattedAddress",
+                "location",
+                "viewport",
+              ],
+            });
+
+            var latLng = place.location;
+            if (!latLng) {
+              showToast("找不到此地點的位置資訊", "error");
+              return;
+            }
+
+            // 確保轉為可用的座標格式
+            if (typeof latLng.lat === "function") {
+              latLng = { lat: latLng.lat(), lng: latLng.lng() };
+            }
+
+            // 先填入店名與地址（可修改），再移動地圖與放置標記
+            var nameField = document.getElementById("fieldName");
+            var addrField = document.getElementById("fieldAddress");
+            var displayName =
+              place.displayName ||
+              (placePrediction.text && placePrediction.text.text) ||
+              "";
+            var formattedAddr = place.formattedAddress || "";
+
+            nameField.value = displayName;
+            addrField.value = formattedAddr;
+
+            // Move map to place
+            map.setCenter(latLng);
+            if (map.getZoom() < 16) map.setZoom(16);
+
+            // Place temp marker（若地址仍為空，reverseGeocode 會自動補上）
+            placeTemporaryMarker(latLng);
+
+            // Clear search input after selection
+            if (placeAutocompleteEl && placeAutocompleteEl.value !== undefined)
+              placeAutocompleteEl.value = "";
+          };
+          placeAutocompleteEl.addEventListener(
+            "gmp-placeselect",
+            onPlaceSelect,
+          );
+          placeAutocompleteEl.addEventListener("gmp-select", onPlaceSelect);
+        }
+
+        // ====== Temp Marker ======
+
+        function placeTemporaryMarker(latLng) {
+          if (typeof latLng.lat === "number") {
+            latLng = new google.maps.LatLng(latLng.lat, latLng.lng);
+          }
+          if (tempMarker) {
+            tempMarker.setPosition(latLng);
+          } else {
+            tempMarker = new google.maps.Marker({
+              position: latLng,
+              map: map,
+              draggable: true,
+              animation: google.maps.Animation.DROP,
+              icon: createTempPinIcon(),
+              zIndex: 999,
+            });
+
+            tempMarker.addListener("dragend", function () {
+              updateCoordFields(tempMarker.getPosition());
+              reverseGeocode(tempMarker.getPosition());
+            });
+          }
+
+          updateCoordFields(latLng);
+          reverseGeocode(latLng);
+          document.getElementById("mapHint").classList.add("hidden");
+          document.getElementById("panel").classList.remove("collapsed");
+        }
+
+        function updateCoordFields(latLng) {
+          document.getElementById("fieldLat").value = latLng.lat().toFixed(6);
+          document.getElementById("fieldLng").value = latLng.lng().toFixed(6);
+        }
+
+        function reverseGeocode(latLng) {
+          const geocoder = new google.maps.Geocoder();
+          geocoder.geocode({ location: latLng }, function (results, status) {
+            if (status === "OK" && results[0]) {
+              // Only fill address if empty (don't overwrite search result)
+              var addrField = document.getElementById("fieldAddress");
+              if (!addrField.value) {
+                addrField.value = results[0].formatted_address;
+              }
+            }
+          });
+        }
+
+        // ====== Load Existing Data (JSONP) ======
+
+        function loadExistingData() {
+          if (
+            !config.googleScriptUrl ||
+            config.googleScriptUrl.includes("你的部署ID")
+          ) {
+            return;
+          }
+
+          var callbackName = "_mapDataCallback_" + Date.now();
+
+          window[callbackName] = function (result) {
+            delete window[callbackName];
+            var scriptEl = document.getElementById("jsonp-loader");
+            if (scriptEl) scriptEl.remove();
+
+            if (result.success && result.data) {
+              allData = result.data;
+              renderMarkers();
+              document.getElementById("headerStats").textContent =
+                "已收集 " + allData.length + " 筆資料";
+            }
+          };
+
+          var script = document.createElement("script");
+          script.id = "jsonp-loader";
+          script.src = config.googleScriptUrl + "?callback=" + callbackName;
+          script.onerror = function () {
+            delete window[callbackName];
+            script.remove();
+            console.warn("載入既有資料失敗");
+          };
+          document.head.appendChild(script);
+        }
+
+        // ====== Render Markers (Custom Icons) ======
+
+        function renderMarkers() {
+          markers.forEach(function (m) {
+            m.setMap(null);
+          });
+          markers = [];
+
+          allData.forEach(function (item) {
+            var lat = parseFloat(item.lat);
+            var lng = parseFloat(item.lng);
+            if (isNaN(lat) || isNaN(lng)) return;
+
+            var catConfig = config.categories.find(function (c) {
+              return c.value === item.category;
+            });
+            var color = catConfig ? catConfig.color : "#888";
+            var emoji = catConfig ? catConfig.emoji || catConfig.label : "📍";
+            var catLabel = catConfig ? catConfig.label : item.category;
+
+            var marker = new google.maps.Marker({
+              position: { lat: lat, lng: lng },
+              map: map,
+              title: item.shopName,
+              icon: createPinIcon(color, emoji),
+            });
+
+            marker.addListener("click", function () {
+              var starsHtml = "";
+              var rating = parseInt(item.rating) || 0;
+              for (var i = 0; i < 5; i++) {
+                starsHtml += i < rating ? "&#9733;" : "&#9734;";
+              }
+
+              var html = '<div class="info-content">';
+              html +=
+                "<h3>" + emoji + " " + escapeHtml(item.shopName) + "</h3>";
+              html +=
+                '<span class="info-cat" style="background:' +
+                color +
+                '">' +
+                escapeHtml(catLabel) +
+                "</span>";
+              if (item.address)
+                html +=
+                  '<div style="color:#666;font-size:12px;">' +
+                  escapeHtml(item.address) +
+                  "</div>";
+              html += '<div class="info-stars">' + starsHtml + "</div>";
+              if (item.accessibility)
+                html +=
+                  '<div class="info-facilities">' +
+                  escapeHtml(item.accessibility) +
+                  "</div>";
+              if (item.experience)
+                html +=
+                  '<div class="info-note">' +
+                  escapeHtml(item.experience) +
+                  "</div>";
+              if (item.reporter)
+                html +=
+                  '<div style="font-size:11px;color:#aaa;margin-top:4px;">回報者：' +
+                  escapeHtml(item.reporter) +
+                  "</div>";
+
+              // 只有有 ID 的項目才能編輯/刪除
+              if (item.id) {
+                html += '<div class="info-actions">';
+                html +=
+                  '<button class="info-btn info-btn-edit" onclick="window._startEdit(\'' +
+                  escapeHtml(item.id) +
+                  "')\">&#9998; 編輯</button>";
+                html +=
+                  '<button class="info-btn info-btn-delete" onclick="window._deleteItem(\'' +
+                  escapeHtml(item.id) +
+                  "')\">&#128465; 刪除</button>";
+                html += "</div>";
+              }
+
+              html += "</div>";
+
+              infoWindow.setContent(html);
+              infoWindow.open(map, marker);
+            });
+
+            markers.push(marker);
+          });
+        }
+
+        // ====== Client-side ID Generator ======
+
+        function generateClientId() {
+          var now = new Date();
+          var pad = function (n, len) {
+            return String(n).padStart(len || 2, "0");
+          };
+          var dateStr =
+            now.getFullYear() +
+            pad(now.getMonth() + 1) +
+            pad(now.getDate()) +
+            pad(now.getHours()) +
+            pad(now.getMinutes()) +
+            pad(now.getSeconds());
+          var rand = Math.random().toString(36).substr(2, 6);
+          return dateStr + "_" + rand;
+        }
+
+        // ====== Submit (Create / Update) ======
+
+        async function handleSubmit(e) {
+          e.preventDefault();
+
+          var lat = document.getElementById("fieldLat").value;
+          var lng = document.getElementById("fieldLng").value;
+          var shopName = document.getElementById("fieldName").value.trim();
+          var category = document.getElementById("fieldCategory").value;
+          var rating = document.getElementById("fieldRating").value;
+
+          if (!lat || !lng) {
+            showToast("請先搜尋店家或在地圖上點選位置", "error");
+            return;
+          }
+          if (!shopName) {
+            showToast("請輸入店家名稱", "error");
+            document.getElementById("fieldName").focus();
+            return;
+          }
+          if (!category) {
+            showToast("請選擇類別", "error");
+            return;
+          }
+          if (!rating) {
+            showToast("請選擇體驗評分", "error");
+            return;
+          }
+
+          var accChecked = [];
+          document
+            .querySelectorAll("#accessibilityGrid input:checked")
+            .forEach(function (cb) {
+              accChecked.push(cb.value);
+            });
+
+          var reporterVal = document
+            .getElementById("fieldReporter")
+            .value.trim();
+          if (!reporterVal) {
+            var d = new Date();
+            var pad = function (n) {
+              return String(n).padStart(2, "0");
+            };
+            reporterVal =
+              "回報者" +
+              d.getFullYear() +
+              pad(d.getMonth() + 1) +
+              pad(d.getDate());
+          }
+          var formData = {
+            lat: lat,
+            lng: lng,
+            shopName: shopName,
+            address: document.getElementById("fieldAddress").value.trim(),
+            category: category,
+            accessibility: accChecked.join(", "),
+            rating: rating,
+            experience: document.getElementById("fieldExperience").value.trim(),
+            reporter: reporterVal,
+          };
+
+          var isEditing = editingItem !== null;
+          var btn = document.getElementById("submitBtn");
+          btn.disabled = true;
+          btn.innerHTML =
+            '<span class="spinner"></span>' +
+            (isEditing ? "更新中..." : "送出中...");
+
+          try {
+            if (
+              !config.googleScriptUrl ||
+              config.googleScriptUrl.includes("你的部署ID")
+            ) {
+              throw new Error("尚未設定 Google Apps Script URL");
+            }
+
+            if (isEditing) {
+              // ---- 更新模式 ----
+              formData._action = "update";
+              formData.id = editingItem.id;
+
+              await fetch(config.googleScriptUrl, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData),
+              });
+
+              showToast("資料已更新！", "success");
+
+              // 更新本地資料
+              var idx = allData.findIndex(function (d) {
+                return d.id === editingItem.id;
+              });
+              if (idx !== -1) {
+                formData.id = editingItem.id;
+                formData.timestamp = editingItem.timestamp;
+                allData[idx] = formData;
+              }
+            } else {
+              // ---- 新增模式 ----
+              var newId = generateClientId();
+              formData.id = newId;
+
+              await fetch(config.googleScriptUrl, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData),
+              });
+
+              showToast("資料送出成功！", "success");
+
+              allData.push(formData);
+            }
+
+            renderMarkers();
+            document.getElementById("headerStats").textContent =
+              "已收集 " + allData.length + " 筆資料";
+            resetForm();
+          } catch (err) {
+            showToast(err.message || "操作失敗", "error");
+          } finally {
+            btn.disabled = false;
+            btn.textContent = isEditing ? "更新資料" : "送出資料";
+          }
+        }
+
+        // ====== Start Edit ======
+
+        window._startEdit = function (id) {
+          var item = allData.find(function (d) {
+            return d.id === id;
+          });
+          if (!item) {
+            showToast("找不到此筆資料", "error");
+            return;
+          }
+
+          editingItem = item;
+          infoWindow.close();
+
+          // 切換為編輯模式 UI
+          document.getElementById("panelTitle").textContent = "編輯店家";
+          document.querySelector(".panel-header").classList.add("edit-mode");
+          document.getElementById("submitBtn").textContent = "更新資料";
+          document.getElementById("cancelBtn").style.display = "block";
+          document.getElementById("panel").classList.remove("collapsed");
+
+          // 填入現有資料
+          var lat = parseFloat(item.lat);
+          var lng = parseFloat(item.lng);
+          document.getElementById("fieldLat").value = item.lat || "";
+          document.getElementById("fieldLng").value = item.lng || "";
+          document.getElementById("fieldName").value = item.shopName || "";
+          document.getElementById("fieldAddress").value = item.address || "";
+          document.getElementById("fieldExperience").value =
+            item.experience || "";
+          document.getElementById("fieldReporter").value = item.reporter || "";
+
+          // 設定類別
+          document.getElementById("fieldCategory").value = item.category || "";
+          document.querySelectorAll(".cat-btn").forEach(function (b) {
+            b.classList.remove("selected");
+            b.style.background = "";
+            if (b.dataset.value === item.category) {
+              b.classList.add("selected");
+              b.style.background = b.dataset.color;
+            }
+          });
+
+          // 設定評分
+          selectedRating = parseInt(item.rating) || 0;
+          document.getElementById("fieldRating").value = selectedRating;
+          updateStars();
+
+          // 設定無障礙設施勾選
+          var facilities = (item.accessibility || "")
+            .split(",")
+            .map(function (s) {
+              return s.trim();
+            });
+          document
+            .querySelectorAll("#accessibilityGrid input")
+            .forEach(function (cb) {
+              cb.checked = facilities.indexOf(cb.value) !== -1;
+            });
+
+          // 放置標記到編輯位置
+          if (!isNaN(lat) && !isNaN(lng)) {
+            var latLng = new google.maps.LatLng(lat, lng);
+            placeTemporaryMarker(latLng);
+            map.setCenter(latLng);
+            if (map.getZoom() < 15) map.setZoom(15);
+          }
+
+          // 隱藏地圖提示
+          document.getElementById("mapHint").classList.add("hidden");
+        };
+
+        // ====== Delete Item ======
+
+        window._deleteItem = function (id) {
+          if (!confirm("確定要刪除這筆資料嗎？此操作無法復原。")) return;
+
+          var item = allData.find(function (d) {
+            return d.id === id;
+          });
+          if (!item) {
+            showToast("找不到此筆資料", "error");
+            return;
+          }
+
+          infoWindow.close();
+
+          if (
+            !config.googleScriptUrl ||
+            config.googleScriptUrl.includes("你的部署ID")
+          ) {
+            showToast("尚未設定 Google Apps Script URL", "error");
+            return;
+          }
+
+          fetch(config.googleScriptUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ _action: "delete", id: id }),
+          })
+            .then(function () {
+              showToast("資料已刪除", "success");
+
+              // 從本地資料中移除
+              allData = allData.filter(function (d) {
+                return d.id !== id;
+              });
+              renderMarkers();
+              document.getElementById("headerStats").textContent =
+                "已收集 " + allData.length + " 筆資料";
+
+              // 如果正在編輯這筆資料，取消編輯
+              if (editingItem && editingItem.id === id) {
+                resetForm();
+              }
+            })
+            .catch(function (err) {
+              showToast("刪除失敗：" + (err.message || "未知錯誤"), "error");
+            });
+        };
+
+        // ====== Cancel Edit ======
+
+        window._cancelEdit = function () {
+          resetForm();
+          showToast("已取消編輯", "success");
+        };
+
+        function resetForm() {
+          // 清除編輯狀態
+          editingItem = null;
+          document.getElementById("panelTitle").textContent = "新增店家";
+          document.querySelector(".panel-header").classList.remove("edit-mode");
+          document.getElementById("submitBtn").textContent = "送出資料";
+          document.getElementById("cancelBtn").style.display = "none";
+
+          // 清除表單
+          document.getElementById("dataForm").reset();
+          if (placeAutocompleteEl && placeAutocompleteEl.value !== undefined)
+            placeAutocompleteEl.value = "";
+          document.getElementById("fieldLat").value = "";
+          document.getElementById("fieldLng").value = "";
+          document.getElementById("fieldCategory").value = "";
+          document.getElementById("fieldRating").value = "";
+          selectedRating = 0;
+          updateStars();
+
+          document.querySelectorAll(".cat-btn").forEach(function (b) {
+            b.classList.remove("selected");
+            b.style.background = "";
+          });
+
+          if (tempMarker) {
+            tempMarker.setMap(null);
+            tempMarker = null;
+          }
+
+          document.getElementById("mapHint").classList.remove("hidden");
+        }
+
+        // ====== Init ======
+        document.addEventListener("DOMContentLoaded", loadConfig);
+      })();
+    </script>
+  </body>
+</html>
