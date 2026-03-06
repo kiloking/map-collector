@@ -6,3 +6,5 @@ config.json
 
 # 建置輸出
 dist/
+
+.env

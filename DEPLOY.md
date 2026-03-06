@@ -24,12 +24,12 @@ GOOGLE_MAPS_API_KEY=你的API金鑰 npm run build
 ### 方法一：Git 連線（推薦）
 
 1. **Workers & Pages** → **Create** → **Connect to Git** → 選擇 `map-collector`
-2. **Build settings**：
-   - **Build command**: `npm run build && npx wrangler deploy`
-   - 或分開：**Build command** `npm run build`，**Build output** 不適用（wrangler 會處理）
+2. **Deploy command**（或 Build command）設為：
+   ```
+   npm install && npm run build && npx wrangler deploy
+   ```
+   ⚠️ 必須包含 `npm run build`，否則 `dist/` 不會產生，部署會失敗
 3. **Environment variables**：新增 `GOOGLE_MAPS_API_KEY`
-
-> 若 Cloudflare 的 Git 整合要求「Build output directory」，可設為 `dist`，並將 Build command 改為 `npm run build`。部分整合可能需用 **Direct Upload** 或 **Wrangler**。
 
 ### 方法二：本機指令部署
 

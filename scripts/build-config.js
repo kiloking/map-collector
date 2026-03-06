@@ -2,8 +2,9 @@
 /**
  * 建置 dist/ - 從環境變數注入敏感資訊，輸出部署用檔案
  * 部署時：Cloudflare 會設定 GOOGLE_MAPS_API_KEY
- * 本地開發：GOOGLE_MAPS_API_KEY=你的key node scripts/build-config.js
+ * 本地開發：.env 或 GOOGLE_MAPS_API_KEY=你的key node scripts/build-config.js
  */
+require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 
